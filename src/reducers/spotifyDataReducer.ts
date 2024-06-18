@@ -1,13 +1,17 @@
 import { SpotifyData } from "../SpotifyAmpContext"
 
-interface Actions extends SpotifyData {
-    type: 'addToken'|'setCurrentTrack'|'setPlayerId' | 'setDevices'
-    
+export interface Actions extends SpotifyData {
+    type: 'addToken'|'setCurrentTrack'|'setPlayerId' | 'setDevices' | 'setPlayerData'
 }
 
 export const spotifyDataReducer = (data: SpotifyData = {}, action: Actions) => {
-    console.log(action)
     switch (action.type) {
+        case 'setPlayerData' : {
+            return {
+                ...data,
+                currentDeviceData: action.currentDeviceData
+            }
+        }
         case 'addToken': {
             return {
                 ...data,

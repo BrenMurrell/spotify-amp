@@ -1,28 +1,22 @@
 import { useSpotify } from "./hooks/useSpotify";
-import { Scopes, Track, SpotifyApi, Devices, TrackItem } from '@spotify/web-api-ts-sdk';
+import { Scopes, Track, SpotifyApi, Devices, Device } from '@spotify/web-api-ts-sdk';
 import { useEffect, useReducer, useState } from 'react'
 import DeviceList from "./components/Device/DeviceList";
 import WebPlayback from "./components/WebPlayback/WebPlayback";
-import {SpotifyAmpContext, SpotifyDispatchContext, SpotifyData } from "./SpotifyAmpContext";
+import {SpotifyAmpContext, SpotifyDispatchContext } from "./SpotifyAmpContext";
 import Controls from "./components/Controls/Controls";
 import { spotifyDataReducer } from "./reducers/spotifyDataReducer";
 import CurrentTrackWindow from "./components/CurrentTrackWindow/CurrentTrackWindow";
-// import { ISpotifyAmpContext } from "./SpotifyAmpContext";
+import ControlVolume from "./components/Controls/ControlVolume";
 
 function App() {
-  
-  const [state, setState] = useState<SpotifyData>({});
-
   const sdk = useSpotify(
     import.meta.env.VITE_SPOTIFY_CLIENT_ID, 
     import.meta.env.VITE_REDIRECT_TARGET, 
     Scopes.all
   );
 
-  
-
   return (
-    
         sdk
           ? (<SpotifySearch sdk={sdk} />) 
           : (<></>)
@@ -30,25 +24,30 @@ function App() {
 }
 
 function SpotifySearch({ sdk }: { sdk: SpotifyApi}) {
-  const [spotifyData, dispatch] = useReducer(
-    spotifyDataReducer, {}
-  );
+    const [spotifyData, dispatch] = useReducer(
+        spotifyDataReducer, {}
+    );
 
-  const [token, setToken] = useState<string>('');
 
-  const [playerReady, setPlayerReady] = useState(false);
-  useEffect(() => {
-    const fullToken = window.localStorage.getItem('spotify-sdk:AuthorizationCodeWithPKCEStrategy:token');
-    const parseToken = fullToken ? JSON.parse(fullToken) : {};
-    setToken(parseToken.access_token);
-    addToken(parseToken.access_token);
-  }, [sdk]);
+    const [playerReady, setPlayerReady] = useState(false);
+    useEffect(() => {
+        const fullToken = window.localStorage.getItem('spotify-sdk:AuthorizationCodeWithPKCEStrategy:token');
+        const parseToken = fullToken ? JSON.parse(fullToken) : {};
+        addToken(parseToken.access_token);
+    }, [sdk]);
  
 
   const addToken = (newToken: string) => {
     dispatch({
       type: 'addToken',
       token: newToken
+    })
+  }
+
+  const setCurrentDeviceData = (currentDeviceData: Device) => {
+    dispatch({
+        type: "setPlayerData",
+        currentDeviceData
     })
   }
 
@@ -75,7 +74,8 @@ function SpotifySearch({ sdk }: { sdk: SpotifyApi}) {
 
   const {
     currentDevice,
-    currentTrack
+    currentTrack,
+    token
   } = spotifyData;
 
   return (
@@ -85,7 +85,7 @@ function SpotifySearch({ sdk }: { sdk: SpotifyApi}) {
         <p>Current player: {currentDevice}</p>
         
         {playerReady && (
-            <DeviceList sdk={sdk} setAllDevices={setAllDevices} />
+            <DeviceList sdk={sdk} setAllDevices={setAllDevices} setCurrentDeviceData={setCurrentDeviceData} />
         )}
         {token && (
             <WebPlayback 
