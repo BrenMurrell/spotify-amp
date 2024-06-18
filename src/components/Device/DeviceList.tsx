@@ -1,30 +1,40 @@
-import { useEffect, useState } from "react";
-// import { useSpotify } from "../../hooks/useSpotify";
-import { Devices, SpotifyApi } from '@spotify/web-api-ts-sdk';
+import { useContext, useEffect } from "react";
+import { SpotifyApi } from '@spotify/web-api-ts-sdk';
+import { SpotifyAmpContext } from "@/SpotifyAmpContext";
 
-
-
-const DeviceList = ({ sdk }: { sdk: SpotifyApi}) => {
-//   const [results, setResults] = useState<SearchResults<["artist"]>>({} as SearchResults<["artist"]>);
-  const [devices, setDevices] = useState<Devices>({} as Devices);
-
+const DeviceList = ({ sdk, setAllDevices }: { sdk: SpotifyApi, setAllDevices: any}) => {
+    const spotifyData = useContext(SpotifyAmpContext);
     useEffect(() => {
         (async () => {
-        const results = await sdk.player.getAvailableDevices();
-          console.log('results', results.devices);
-          setDevices(() => results);      
+            const results = await sdk.player.getAvailableDevices();
+            setAllDevices(results);
+            console.log(spotifyData);
         })();
-      }, [sdk]);
-    useEffect(() => {
-      console.log('devices is now', devices);
-    }, [devices])
-    return (
-      <>
-        {devices?.devices?.map(device => (
-          <p>{ device.name }</p>
-        ))}
+    }, [sdk]);
 
-      </>
+    const { allDevices, currentDevice } = spotifyData;
+    const transferPlayback = ( deviceId: string | null) => {
+        deviceId && sdk.player.transferPlayback([deviceId]);
+    }
+
+    return (
+        <>
+            <ul>
+                {allDevices && (
+                    allDevices.devices.map(device => (
+                        <li 
+                            key={device.id}
+                            style={device.id === currentDevice ? {fontWeight: 'bold' } : {}}
+                            onClick={() => transferPlayback(device.id)}
+                        >
+                            {device.name}
+                        </li>
+                    ))
+                )}
+            </ul>
+            <p>Current device is {currentDevice}</p>
+
+        </>
     )
 }
 

@@ -1,0 +1,10 @@
+* {
+    font-family: monospace;
+}
+
+.panel {
+    border: 1px solid;
+    max-width: 600px;
+    color: #27ed2c;
+    background-color: #343552;
+}
