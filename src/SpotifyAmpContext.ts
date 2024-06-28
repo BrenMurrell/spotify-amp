@@ -1,15 +1,18 @@
-import { createContext, useContext, useReducer } from "react";
-import { Devices, Track } from "@spotify/web-api-ts-sdk";
+import { createContext, useContext } from "react";
+import { Devices, SpotifyApi, Track } from "@spotify/web-api-ts-sdk";
+import { Actions } from "./reducers/spotifyDataReducer";
 
 export interface SpotifyData {
     token?: string | null,
     currentDevice?: string | '',
     currentTrack?: Track,
-    allDevices?: Devices | null
+    allDevices?: Devices,
+    sdk?: SpotifyApi | null,
+    dispatch?: React.Dispatch<Actions>
 }
 
 export const SpotifyAmpContext = createContext<SpotifyData>({});
-export const SpotifyDispatchContext = createContext<any>(null);
+export const SpotifyDispatchContext = createContext<React.Dispatch<Actions>>(() => {});
 
 export function useSpotifyDispatch() {
     return useContext(SpotifyDispatchContext);

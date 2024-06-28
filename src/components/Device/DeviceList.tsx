@@ -1,20 +1,28 @@
 import { useContext, useEffect } from "react";
-import { SpotifyApi } from '@spotify/web-api-ts-sdk';
-import { SpotifyAmpContext } from "@/SpotifyAmpContext";
+import { SpotifyAmpContext, SpotifyDispatchContext } from "@/SpotifyAmpContext";
+import { setAllDevices } from "@/actions/devices";
 
-const DeviceList = ({ sdk, setAllDevices }: { sdk: SpotifyApi, setAllDevices: any}) => {
+const DeviceList = () => {
     const spotifyData = useContext(SpotifyAmpContext);
-    useEffect(() => {
-        (async () => {
-            const results = await sdk.player.getAvailableDevices();
-            setAllDevices(results);
-            console.log(spotifyData);
-        })();
-    }, [sdk]);
+    const dispatch = useContext(SpotifyDispatchContext);
+    const { sdk, allDevices, currentDevice } = spotifyData;
 
-    const { allDevices, currentDevice } = spotifyData;
-    const transferPlayback = ( deviceId: string | null) => {
-        deviceId && sdk.player.transferPlayback([deviceId]);
+
+    useEffect(() => {
+        !allDevices && sdk?.player.getAvailableDevices().then(results => {
+            setAllDevices(dispatch, results);
+        });        
+    }, [allDevices, dispatch, sdk?.player, spotifyData])
+
+    const removeDevice = (deviceId: string | null) => {
+        //not sure this can be done
+        if(deviceId) {
+        //     sdk?.player.removeDevice(deviceId).then(() => {
+        //         sdk?.player.getAvailableDevices().then(results => {
+        //             setAllDevices(dispatch, results);
+        //         });
+        //     })
+        }
     }
 
     return (
@@ -25,9 +33,9 @@ const DeviceList = ({ sdk, setAllDevices }: { sdk: SpotifyApi, setAllDevices: an
                         <li 
                             key={device.id}
                             style={device.id === currentDevice ? {fontWeight: 'bold' } : {}}
-                            onClick={() => transferPlayback(device.id)}
                         >
                             {device.name}
+                            <button onClick={() => removeDevice(device.id)}>Remove</button>
                         </li>
                     ))
                 )}

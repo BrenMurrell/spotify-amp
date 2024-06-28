@@ -1,5 +1,5 @@
 import { SpotifyAmpContext } from "@/SpotifyAmpContext"
-import { useContext, useEffect, useRef, useState } from "react"
+import { useContext } from "react"
 import Panel from "../Panel/Panel";
 import moment from "moment";
 const CurrentTrackWindow = () => {

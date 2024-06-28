@@ -1,18 +1,23 @@
 import { SpotifyApi, Track } from "@spotify/web-api-ts-sdk";
 import { useState, useEffect, SetStateAction, useContext } from 'react';
-import { SpotifyAmpContext } from "../../SpotifyAmpContext";
+import { SpotifyAmpContext, SpotifyDispatchContext } from "../../SpotifyAmpContext";
+import { setCurrentPlayingTrack } from "@/actions/track";
+import { setCurrentDevice } from "@/actions/devices";
 
 
 type Props = {
     token: string,
     setPlayerReady: React.Dispatch<SetStateAction<boolean>>,
-    setDeviceId: any,
     setCurrentTrack: any
 }
 
-function WebPlayback({ token, setPlayerReady, setDeviceId, setCurrentTrack }: Props) {
-    const [player, setPlayer] = useState(undefined);
-    const spotifyData = useContext(SpotifyAmpContext);
+
+function WebPlayback({ token, setPlayerReady, setCurrentTrack }: Props) {
+    const [player, setPlayer] = useState<any>(undefined);
+    // const spotifyData = useContext(SpotifyAmpContext);
+    const dispatch = useContext(SpotifyDispatchContext);
+    const { allDevices, currentDevice } = useContext(SpotifyAmpContext);
+    
     useEffect(() => {
         const script = document.createElement("script");
         script.src = "https://sdk.scdn.co/spotify-player.js";
@@ -21,47 +26,67 @@ function WebPlayback({ token, setPlayerReady, setDeviceId, setCurrentTrack }: Pr
         document.body.appendChild(script);
     
         window.onSpotifyWebPlaybackSDKReady = () => {
-    
-            const player = new window.Spotify.Player({
+            console.log('ready for player to load')
+            const ampPlayer = new window.Spotify.Player({
                 name: 'SpotifyAmp',
                 getOAuthToken: cb => { cb(token); },
                 volume: 0.5
             });
-    
-            setPlayer(player);
+            console.log('ampPlayer', ampPlayer);
             
-            player.addListener('ready', ({ device_id }: any) => {
-                setPlayerReady(true);
-                setDeviceId(device_id);
-                console.log('Ready with Device ID', device_id);
-            });
-    
-            player.addListener('not_ready', ({ device_id }: any) => {
-                console.log('Device ID has gone offline', device_id);
-            });
+            setPlayer(ampPlayer);
 
-            player.addListener('player_state_changed', ({
-                position,
-                duration,
-                track_window: { current_track } 
-              }: any) => {
-                console.log('Currently Playing', current_track);
-                console.log('Position in Song', position);
-                console.log('Duration of Song', duration);
-                setCurrentTrack(current_track);
-              });
+
+            if(player) {
+                console.log('player is of type', typeof player, player);
+                player.addListener('ready', ({ device_id }: Spotify.WebPlaybackInstance) => {
+                    setPlayerReady(true);
+                    setCurrentDevice(dispatch, device_id);
+                    console.log('Ready with Device ID', device_id);
+                });
+        
+                player.addListener('not_ready', ({ device_id }: Spotify.WebPlaybackInstance) => {
+                    console.log('Device ID has gone offline', device_id);
+                });
     
-    
-            player.connect();
+                player.addListener('player_state_changed', (state: Spotify.PlaybackState) => {
+                    const {
+                        position,
+                        duration,
+                        track_window: { current_track } 
+                      } = state
+                    console.log('Currently Playing', current_track, position, duration, state);
+                    
+                    setCurrentTrack(current_track);
+                    setCurrentPlayingTrack(dispatch, current_track);
+                  });
+        
+        
+                player.connect();
+
+            }
     
         };
     }, []);
+
+    
 
    return (
       <>
         <div className="container">
            <div className="main-wrapper">
-
+                <h2>Players</h2>
+                {allDevices && (
+                    allDevices.devices.map(device => (
+                        <div key={device.id}>
+                            <p>
+                                {device.name}{device.id === currentDevice && ' (current)'}&nbsp;
+                                {device.id}
+                            </p>
+                            <button onClick={() => player.disconnect(device.id)}>Disconnect</button>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
       </>

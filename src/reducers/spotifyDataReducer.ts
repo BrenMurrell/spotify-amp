@@ -1,12 +1,17 @@
+import { Device, Devices } from "@spotify/web-api-ts-sdk"
 import { SpotifyData } from "../SpotifyAmpContext"
 
-interface Actions extends SpotifyData {
-    type: 'addToken'|'setCurrentTrack'|'setPlayerId' | 'setDevices'
-    
+export interface Actions extends SpotifyData {
+    type: 'addToken'|'setCurrentTrack'|'setPlayerId' | 'setDevices' | 'setSdk' | 'removeDevice',
+    deviceId?: string,    
+}
+
+interface LocalDevices extends Devices, Array<Device> {
+
 }
 
 export const spotifyDataReducer = (data: SpotifyData = {}, action: Actions) => {
-    console.log(action)
+    console.log('running action', action)
     switch (action.type) {
         case 'addToken': {
             return {
@@ -21,17 +26,29 @@ export const spotifyDataReducer = (data: SpotifyData = {}, action: Actions) => {
             }
         }
         case 'setDevices': {
-            console.log('setting devices', action);
             return {
                 ...data,
                 allDevices: action.allDevices
             }
         }
+        // case 'removeDevice': {
+        //     const localDevices: LocalDevices = data.allDevices as LocalDevices;
+        //     return {
+        //         ...data,
+        //         allDevices: localDevices?.filter((device: Device) => device.id !== action.deviceId)
+        //     }
+        // }
+
         case 'setCurrentTrack': {
-            console.log('setting track', action);
             return {
                 ...data,
                 currentTrack: action.currentTrack
+            }
+        }
+        case 'setSdk': {
+            return {
+                ...data,
+                sdk: action.sdk
             }
         }
         default: {
